@@ -1,25 +1,25 @@
 
 
-# for now only parametric, outputs estimated variance of estimator at theta_hat
 param.bootstrap <- function(distr, theta_hat, n, N, estimator){
   f = distr(theta_hat)
   theta_hat_hats = replicate(N, estimator(f(n)))
   var(theta_hat_hats)
 }
 
-
-monster <- function (true_distr, true_theta, bootstrap_distr, estimator, n, M, N){
-  # todo
+nonparam.bootstrap <- function(data, n, N, estimator){
   
 }
 
 
 
-
-mean0norm <- function (sd){
-  function(N){
-    rnorm(N, mean=0, sd=sd)
+param.monster <- function (true_distr, true_theta, params_estimator, n, M, N, estimator=NULL, bootstrap_distr=NULL){
+  if (is.null(estimator)){
+    estimator = params_estimator
   }
+  if (is.null(bootstrap_distr)){
+    bootstrap_distr = true_distr
+  }
+  f = true_distr(true_theta)
+  replicate(M, param.bootstrap(bootstrap_distr, params_estimator(f(n)), n, N, estimator))
 }
 
-print(param.bootstrap(mean0norm, 1, 10, 1000, function(x) var(x)))

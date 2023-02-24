@@ -1,0 +1,53 @@
+---
+title: "Bootstrap Testing"
+author: "Koen Bresters"
+date: "2023-02-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# import the monster function
+source("monster_functie.r")
+```
+
+## normal dist with 0 mean parametric
+
+```{r}
+# normal distribution
+mean0norm <- function (sd){
+  function(N){
+    rnorm(N, mean=0, sd=sd)
+  }
+}
+
+results = param.monster(true_dist=mean0norm, true_theta=1, params_estimator=function(x) sd(x), n=100, N=1000, M=300)
+hist(results, xlab="estimated variance")
+print(list(sd.of.estimated.variance=sd(results)))
+```
+
+
+## normal dist with unknown mean parametric
+
+```{r}
+
+
+normdist <- function (x){
+  function(N){
+    rnorm(N, mean=x$mean, sd=x$sd)
+  }
+}
+
+full_estimator <- function(x) list(mean=mean(x), sd=sd(x))
+estimator <- function(x) sd(x)
+
+results = param.monster(true_distr=normdist, true_theta=list(mean=0, sd=1), params_estimator=full_estimator, estimator=estimator, n=100, N=1000, M=300)
+hist(results, xlab="estimated variance")
+print(list(sd.of.estimated.variance=sd(results)))
+```
+
+
+
