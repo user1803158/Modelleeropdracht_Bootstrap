@@ -14,9 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 source("monster_functie.r")
 
 # define a nice plotting function
-niceplot <- function(data, title){
+niceplot <- function(data, title, true_variance){
   hist(results, xlab="estimated variance", main=title)
-  mtext(paste("sd. of estimated variance = ", as.character(sd(results))), side=4)
+  mtext(paste("Mean Square Error = ", as.character(mean((results-true_variance)^2))), side=4)
+  abline(v=true_variance, col="red")
 }
 
 ```
@@ -24,7 +25,6 @@ niceplot <- function(data, title){
 ## normal dist with 0 mean parametric
 
 ```{r}
-# normal distribution
 mean0norm <- function (sd){
   function(N){
     rnorm(N, mean=0, sd=sd)
@@ -32,15 +32,13 @@ mean0norm <- function (sd){
 }
 
 results = param.monster(true_distr_gen=mean0norm, true_theta=1, params_estimator=function(x) sd(x), n=100, N=1000, M=300)
-niceplot(results, "normal dist with mean 0 parametric results")
+true_variance = param.bootstrap(mean0norm, 1, n=100, N=10000, estimator=function(x) sd(x))
+niceplot(results, "normal dist with mean 0 parametric results", true_variance)
 ```
-
 
 ## normal dist with unknown mean parametric
 
 ```{r}
-
-
 normdist <- function (x){
   function(N){
     rnorm(N, mean=x$mean, sd=x$sd)
@@ -51,15 +49,16 @@ full_estimator <- function(x) list(mean=mean(x), sd=sd(x))
 estimator <- function(x) sd(x)
 
 results = param.monster(true_distr_gen=normdist, true_theta=list(mean=0, sd=1), params_estimator=full_estimator, estimator=estimator, n=100, N=1000, M=300)
-niceplot(results, "normal dist with unknown mean parametric results")
+true_variance = param.bootstrap(normdist, list(mean=0, sd=1), n=100, N=10000, estimator=estimator)
+niceplot(results, "normal dist with unknown mean parametric results", true_variance)
 ```
 
 ## normal dist non-parametric
+
 ```{r}
 distr = normdist(list(mean=0, sd=1))
 estimator = function(x) sd(x)
 results = nonparam.monster(distr, estimator, n=100, M=300, N=1000)
-niceplot(results, "normal dist non-parametric results")
+true_variance = param.bootstrap(function(x) distr, NA, n=100, N=10000, estimator=estimator)
+niceplot(results, "normal dist non-parametric results", true_variance)
 ```
-
-
