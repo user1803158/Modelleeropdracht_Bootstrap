@@ -1,0 +1,96 @@
+---
+title: "Modelleren: statistiekproject, de monsterfunctie"
+date: '2023-02-23'
+output: pdf_document
+---
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+f <- function(real_distr, toBeEstimated_real, estimator_real, theta_real,
+              est_distr, toBeEstimated_est, estimator_est, theta_est,
+              N, n){
+  # save the real theta
+  realTheta <-theta_real[toBeEstimated_real]
+  
+  # create a dataset
+  dataset <- real_distr(n, theta_real)
+  dataEstimator <- estimator_real(dataset) # estimator based on data 
+  
+  # calculate real variance of estimator
+  samples <- replicate(N, real_distr(n, theta_real)) # create samples
+  MLE.samples <- apply(samples, 2, function(x) estimator_real(x)) # est for each sample 
+  var.samples <- sum((MLE.samples - sum(MLE.samples)/N)^2)/N # estimate var of est's
+  
+  # calculate bootstrapped variance
+  ## parametric bootstrap: same distribution as data 
+  theta.boot <- theta_real # create new parameter vector
+  theta.boot[toBeEstimated_real] <- dataEstimator # create new parameter vector
+  samples.boot.same <- replicate(N, real_distr(n, theta.boot)) # create samples 
+  MLE.boot.same <- apply(samples.boot.same, 2, function(x) estimator_real(x)) # estimators
+  var.boot.same <- sum((MLE.boot.same - sum(MLE.boot.same)/N)^2)/N # estimate var of est's
+  
+  ## parametric bootstrap: different distribution from data 
+  theta.boot.est <- theta_est
+  theta.boot.est[toBeEstimated_est] <- dataEstimator # create new parameter vector
+  samples.boot.diff <- replicate(N, est_distr(n, theta.boot.est)) # create samples 
+  MLE.boot.diff <- apply(samples.boot.diff, 2, function(x) estimator_est(x)) # estimators
+  var.boot.diff <- sum((MLE.boot.diff - sum(MLE.boot.diff)/N)^2)/N # estimate var of est's
+  
+  ## nonparametric bootstrap
+  samples.nonpar <- replicate(N, sample(dataset, n, replace = TRUE))
+  est.nonpar <- apply(samples.boot.same, 2, mean) # estimators
+  var.nonpar <- sum((est.nonpar - sum(est.nonpar)/N)^2)/N # estimate var of est's
+  
+  
+  # create output
+  output <- list(
+    # Dataset
+    randomData = list(dataset, # data
+                      "realTheta" = theta_real[toBeEstimated_real]), # daadwerkelijke waarde vd parameter
+                       
+    # estimates when variance is known
+    BasedOnData = list(dataEstimator, # geschatte parameter obv de data
+                       "dataBias" = realTheta - dataEstimator, # bias van de geschatte parameter obv de data
+                       "dataVar" = var.samples), # variantie van de geschatte parameter obv de data
+    
+    # parametric bootstrap: same distribution
+    Parametric_sameDistr = list("paramBootstrapSamples" = samples.boot.same, # samples
+                                "paramBootstrapEst" = MLE.boot.same, # estimators
+                                "paramBootstrapMeanEst" = mean(MLE.boot.same), # mean estimator
+                                "paramBootstrapBias" = mean(realTheta - MLE.boot.same), # mean bias
+                                "paramBootstrapVar" = var.boot.same), # variantie van de schatter
+                                
+    # parametric bootstrap: different distribution
+    Parametric_sameDistr = list("paramBootstrapSamples" = samples.boot.diff, # samples
+                                "paramBootstrapEst" = MLE.boot.diff, # estimators
+                                "paramBootstrapMeanEst" = mean(MLE.boot.diff), # mean estimator
+                                "paramBootstrapBias" = mean(realTheta - MLE.boot.diff), # mean bias
+                                "paramBootstrapVar" = var.boot.diff),# variantie van de schatter
+    # nonparametric bootstrap
+    nonParametric = list("nonparamBootstrapSamples" = samples.nonpar, # samples
+                         "nonparamBootstrapEst" = est.nonpar, # estimators
+                         "nonparamBootstrapMeanEst" = mean(est.nonpar), # mean estimator
+                         "nonparamBootstrapBias" = mean(realTheta - est.nonpar), # mean bias
+                         "nonparamBootstrapVar" = var.nonpar)) # variantie van de schatter
+  
+  # return output 
+  return(output)
+}
+```
+
+```{r}
+my_output <- f(real_distr = rnorm, toBeEstimated_real = "sd", 
+               estimator_real = function(x) sqrt(sum(x^2)/length(x)), 
+               theta_real = c("mean" = 0, "sd" = 1),
+               est_distr = rexp, toBeEstimated_est = "rate", 
+               estimator_est = function(x) mean(x), 
+               theta_est = c("rate" = 1),
+               N = 1000, n = 10)
+```
+
+Problems so far:
+- runif als expected distribution geeft NA values tussendoor, heeft iest te maken met dat je een vector supplied want als je de getallen handmatig intypt, dan heb je dat probleem niet.
+- Wat is de estimator bij de nonparametrische bootstrap?
