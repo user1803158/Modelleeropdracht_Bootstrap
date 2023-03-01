@@ -25,7 +25,7 @@ analyse_bootstrap_data <- function(true_theta, alphas, true_variance, M, bootstr
   for (i in seq_along(alphas)){
     for (j in seq_along(confidence_interval_names)){
       collumn_index = 2+(i-1)*length(confidence_interval_names)+(j-1)
-      results = c(results, sum(bootstrap_results[, collumn_index]))
+      results = c(results, 1-mean(bootstrap_results[, collumn_index]))
     }
   }
   result_names = c("mean square error of variance")
