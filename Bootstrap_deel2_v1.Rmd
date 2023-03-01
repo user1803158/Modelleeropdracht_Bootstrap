@@ -1,0 +1,67 @@
+---
+title: "Modelleren: statistiekproject"
+date: '2023-02-23'
+output: pdf_document
+---
+
+```{r}
+rm(list = ls())
+```
+
+## Part 2: data analysis
+
+2018:
+P: mannen + vrouwen, >= 70 jaar
+I: aspirine
+C: placebo 
+O: hartaandoening ontwikkeld
+
+1988:
+P: mannelijke artsen, 40-84 jaar
+I: aspirine
+C: placebo
+O: hartaandoening ontwikkeld
+
+```{r}
+# set parameters
+## 2018 trial
+N_asp_2018 = 9525
+n_asp_2018 = 448
+N_plac_2018 = 9589
+n_plac_2018 = 474
+
+## 1988 trial
+N_asp_1988 = 11037
+n_asp_hart_1988 = 104
+n_asp_hersen_1988 = 80
+N_plac_1988 = 11034
+n_plac_hart_1988 = 189
+n_plac_hersen_1988 = 70
+
+# relative risk 
+r_asp_2018 <- n_asp_2018/N_asp_2018
+r_plac_2018 <- n_plac_2018/N_plac_2018
+(RR_2018 <- r_asp_2018/r_plac_2018)
+
+r_asp_hart_1988 <- n_asp_hart_1988/N_asp_1988
+r_plac_hart_1988 <- n_plac_hart_1988/N_plac_1988
+(RR_hart_1988 <- r_asp_hart_1988/r_plac_hart_1988)
+
+r_asp_hersen_1988 <- n_asp_hersen_1988/N_asp_1988
+r_plac_hersen_1988 <- n_plac_hersen_1988/N_plac_1988
+(RR_hersen_1988 <- r_asp_hersen_1988/r_plac_hersen_1988)
+
+# create vectors 
+asp_2018 <- sample(c(rep(0, N_asp_2018-n_asp_2018), rep(1, n_asp_2018)), replace = F)
+plac_2018 <- sample(c(rep(0, N_plac_1988-n_plac_2018), rep(1, n_plac_2018)), replace = F)
+
+bootstrap_2018 <- replicate(10000, expr = {
+  sample_asp <- sample(asp_2018, replace = T)
+  sample_plac <- sample(plac_2018, replace = T)
+  mean(sample_asp)/mean(sample_plac)
+})
+quantile(bootstrap_2018, 0.025)
+quantile(bootstrap_2018, 0.975)
+```
+
+Idee: maak een contigency tabel
