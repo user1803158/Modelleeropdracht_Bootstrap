@@ -14,9 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 source("monster_functie.r")
 
 # define a nice plotting function
-niceplot <- function(data, title, true_variance){
-  hist(results, xlab="estimated variance", main=title)
-  mtext(paste("Mean Square Error = ", as.character(mean((results-true_variance)^2))), side=4)
+niceplot <- function(results, title, true_variance){
+  variance_data = results
+  hist(variance_data, xlab="estimated variance", main=title)
+  mtext(paste("Mean Square Error = ", as.character(mean((variance_data-true_variance)^2))), side=4)
   abline(v=true_variance, col="red")
 }
 
@@ -31,8 +32,10 @@ mean0norm <- function (sd){
   }
 }
 
-results = param.monster(true_distr_gen=mean0norm, true_theta=1, params_estimator=function(x) sd(x), n=100, N=1000, M=300)
-true_variance = param.bootstrap(mean0norm, 1, n=100, N=10000, estimator=function(x) sd(x))
+true_param = 1
+
+results = param_monster(true_distr_gen=mean0norm, true_params=true_param, params_estimator=function(x) sd(x), n=100, N=1000, M=300)
+true_variance = var(param_bootstrap_data(mean0norm(true_param), n=100, N=10000, estimator=function(x) sd(x)))
 niceplot(results, "normal dist with mean 0 parametric results", true_variance)
 ```
 
@@ -47,9 +50,10 @@ normdist <- function (x){
 
 full_estimator <- function(x) list(mean=mean(x), sd=sd(x))
 estimator <- function(x) sd(x)
+true_params = list(mean=0, sd=1)
 
-results = param.monster(true_distr_gen=normdist, true_theta=list(mean=0, sd=1), params_estimator=full_estimator, estimator=estimator, n=100, N=1000, M=300)
-true_variance = param.bootstrap(normdist, list(mean=0, sd=1), n=100, N=10000, estimator=estimator)
+results = param_monster(true_distr_gen=normdist, true_params=true_params, params_estimator=full_estimator, estimator=estimator, n=100, N=1000, M=300)
+true_variance = var(param_bootstrap_data(normdist(true_params), n=100, N=10000, estimator=estimator))
 niceplot(results, "normal dist with unknown mean parametric results", true_variance)
 ```
 
@@ -58,7 +62,7 @@ niceplot(results, "normal dist with unknown mean parametric results", true_varia
 ```{r}
 distr = normdist(list(mean=0, sd=1))
 estimator = function(x) sd(x)
-results = nonparam.monster(distr, estimator, n=100, M=300, N=1000)
-true_variance = param.bootstrap(function(x) distr, NA, n=100, N=10000, estimator=estimator)
+results = nonparam_monster(distr, estimator, n=100, M=300, N=1000)
+true_variance = var(param_bootstrap_data(distr, n=100, N=10000, estimator=estimator))
 niceplot(results, "normal dist non-parametric results", true_variance)
 ```
