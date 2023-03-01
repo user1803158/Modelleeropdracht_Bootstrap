@@ -22,13 +22,13 @@ analyse_bootstrap_data <- function(true_theta, alphas, true_variance, M, bootstr
   
   # turn bootstrap_results into a nice results list
   results = list(mean((bootstrap_results[,1]-true_variance)^2))
-  for (i in 0:(length(alphas)-1)){
-    for (j in 0:(length(confidence_interval_names)-1)){
-      collumn_index = 2+i*length(confidence_interval_names)+j
-      results = c(results, 1-mean(bootstrap_results[, collumn_index]))
+  for (i in seq_along(alphas)){
+    for (j in seq_along(confidence_interval_names)){
+      collumn_index = 2+(i-1)*length(confidence_interval_names)+(j-1)
+      results = c(results, sum(bootstrap_results[, collumn_index]))
     }
   }
-  result_names = c("mean_square_error_of_variance")
+  result_names = c("mean square error of variance")
   for (alpha in alphas){
     for (ci_name in confidence_interval_names){
       name = paste(ci_name, "alpha =", format(round(alpha, digits=3), nsmall=3))
@@ -48,8 +48,8 @@ param_monster <- function (true_distr_gen, true_params, true_theta, params_estim
     bootstrap_distr_gen = true_distr_gen
   }
   # calculate the true variance
-  true_variance = var(param_bootstrap_data(true_distr_gen(true_params), n, true_variance_N, estimator))  
   true_distr = true_distr_gen(true_params)
+  true_variance = var(param_bootstrap_data(true_distr, n, true_variance_N, estimator))
   analyse_bootstrap_data(true_theta, alphas, true_variance, M, function(){
     param_bootstrap_data(bootstrap_distr_gen(params_estimator(true_distr(n))), n, N, estimator)
   })

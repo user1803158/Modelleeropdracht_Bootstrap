@@ -1,0 +1,144 @@
+---
+title: "BootstrapAnalysis"
+author: "Koen Bresters"
+date: "2023-03-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import files
+
+```{r}
+source("monster_functie.r")
+```
+
+First we set some global parameters.
+
+```{r}
+N = 1000
+true_variance_N = 300
+M = 300
+alphas = c(0.001, 0.005, 0.01, 0.05, 0.1)
+```
+
+Now we we define the distributions and estimators that we will use.
+
+```{r}
+mean0norm <- function (sd) function(N) rnorm(N, mean=0, sd=sd)
+norm <- function (x) function(N) rnorm(N, mean=x$mean, sd=x$sd)
+norm_full_estimator <- function(x) list(mean=mean(x), sd=sd(x))
+norm_mean_estimator <- function(x) mean(x)
+norm_sd_estimator <- function(x) sd(x)
+
+gamma <- function(x) function(N) rgamma(N, x$shape, shape=x$scale)
+gamma_full_estimator <- function(x){
+  E = mean(x)
+  V = var(x)
+  list(shape=E^2/V, scale=V/E)
+}
+gamma_shape_estimator <- function(x) mean(x)^2/var(x)
+
+cauchy <- function(x) function(N) rcauchy(N, location=x$loc, scale=x$scale)
+cauchy_full_estimator <- function(x) list(loc=mean(x))
+cauchy_loc_estimator <- function(x) mean(x)
+```
+
+Set the parametric tests that we want to do
+
+```{r}
+param_tests = list()
+for (n in c(10, 50, 100)){
+  param_tests = append(param_tests, list(
+    list(
+      test_name="normal distr. with mean 0, estimating sd", 
+      true_distr_gen=mean0norm, 
+      true_params=1,
+      true_theta=1, 
+      fake_distr_gen=mean0norm,
+      full_estimator=norm_sd_estimator, 
+      estimator=norm_sd_estimator, 
+      n=n
+    ),
+    list(
+      test_name="normal distr. with unknown mean, estimating sd", 
+      true_distr_gen=norm, 
+      true_params=list(mean=0,sd=1),
+      true_theta=1, 
+      fake_distr_gen=norm,
+      full_estimator=norm_full_estimator, 
+      estimator=norm_sd_estimator, 
+      n=n
+    ),
+    list(
+      test_name="gamma distr., estimating shape", 
+      true_distr_gen=gamma, 
+      true_params=list(shape=1,scale=1),
+      true_theta=1,
+      fake_distr_gen=gamma,
+      full_estimator=gamma_full_estimator, 
+      estimator=gamma_shape_estimator, 
+      n=n
+    ))
+)
+}
+```
+
+Set the non-parametric tests that we want to do.
+
+```{r}
+nonparam_tests =list()
+for (n in c(100)){
+  nonparam_tests <- append(nonparam_tests, list(
+    list(
+      test_name="normal distr., estimating sd",
+      true_distr=norm(list(mean=0,sd=1)),
+      estimator=norm_sd_estimator,
+      true_theta=1,
+      n=n
+    ),
+    list(
+      test_name="gamma distr., estimating shape",
+      true_distr=norm(list(mean=0,sd=1)),
+      estimator=norm_sd_estimator,
+      true_theta=1,
+      n=n
+    )
+  ))
+}
+```
+
+Run the tests.
+
+```{r}
+results_list = list()
+
+# parametric tests
+for (x in param_tests){
+  full_name = paste(x$test_name, ", parametric", ", n=", format(round(x$n, digits=0), nsmall=0), sep="")
+  print(paste("calculating ", full_name, "...", sep=""))
+  monster_results = param_monster(x$true_distr_gen, x$true_params, x$true_theta, x$full_estimator, x$n, M, N, true_variance_N, alphas,
+                                  x$estimator, x$fake_distr_gen)
+  results_list <- append(results_list, list(append(list(test=full_name), monster_results)))
+}
+
+# non-parametric tests
+for (x in nonparam_tests){
+  full_name = paste(x$test_name, ", non-parametric", ", n=", format(round(x$n, digits=0), nsmall=0), sep="")
+  print(paste("calculating ", full_name, "...", sep=""))
+  monster_results = nonparam_monster(x$true_distr, x$estimator, x$true_theta, x$n, M, N, true_variance_N, alphas)
+  results_list <- append(results_list, list(append(list(test=full_name), monster_results)))
+  
+}
+
+result_table = do.call(rbind.data.frame, results_list)
+result_table
+```
+
+
+
+
+
+
