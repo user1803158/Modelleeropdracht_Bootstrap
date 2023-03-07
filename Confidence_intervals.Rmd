@@ -13,35 +13,36 @@ knitr::opts_chunk$set(echo = TRUE)
 Moeten estimator functie hebben
 ronden B*alpha af naar boven als het geen geheel getal is
 
-bootstrap_samples is vector met alle bootstrap samples
+bootstrap_samples is een matrix met alle bootstrap samples
 sample is vector met de originele sample
 estimator is functie van de sample x, die dus theta dakje van x geeft
 alpha is waarde van alpha
 
-```
+```{r}
+
 stderror <- function(x) sd(x)/sqrt(length(x))
 
 BCa <- function(bootstrap_samples, sample, estimator, alpha) {
-   B <- length(bootstrap_samples)
+   B <- nrow(bootstrap_samples)
+   N <- length(sample)
    bootstrap_est = rep(0, B)
-   
-   for(i in B){
-   bootstrap_est[i] <- estimator(bootstrap_samples[i])
-   }
-   
    number <- 0
    x <- list(sample)
-   theta <- rep(0, length(sample)-1)
+   theta <- rep(0, N-1)
    
-   for(i in B) 
-   {
-   if(bootstrap_est[i] < estimator(sample)
+   for (i in B){
+      bootstrap_est[i] <- estimator(bootstrap_samples[i,])
+   }
+   
+   for(i in B){
+   if (bootstrap_est[i] < estimator(sample)){
    number <- number + 1
+   }
    }
    
    z0 <- qnorm(number/B)
    
-   for(i in length(sample))
+   for(i in N)
    {
    x_i <- sample[-i]
    theta[i] <- estimator(x_i)
@@ -64,15 +65,15 @@ BCa <- function(bootstrap_samples, sample, estimator, alpha) {
    
    CI <- c(theta_lo, theta_up)
    
-   return CI
+   return(CI)
 }
 
 Bootstrap_t <- function(bootstrap_samples, sample, estimator, alpha) {
-   B <- length(bootstrap_samples)
+   B <- nrow(bootstrap_samples)
    Z <- rep(0, B)
    
    for(i in B)
-   Z[i] <- (estimator(bootstrap_samples[i])- estimator(sample))/stderror(bootstrap_samples[i])
+   Z[i] <- (estimator(bootstrap_samples[i,])- estimator(sample))/stderror(bootstrap_samples[i,])
    
    sort(Z)
    
@@ -87,32 +88,29 @@ Bootstrap_t <- function(bootstrap_samples, sample, estimator, alpha) {
    
    CI <- c(theta_lo, theta_up)
    
-   return CI
+   return(CI)
 }   
    
    
 Basic <- function(bootstrap_samples, sample, estimator, alpha) {
-  B <- length(bootstrap_samples)
-  bootstrap_est = rep(0, B)
+   B <- nrow(bootstrap_samples)
+   bootstrap_est = rep(0, B)
    
-  for(i in B){
-  bootstrap_est[i] <- estimator(bootstrap_samples[i])
-  }
+   for (i in B){
+      bootstrap_est[i] <- estimator(bootstrap_samples[i,])
+   }
   
-  sort(bootstrap_est)
+   sort(bootstrap_est)
   
+   h1 <- round(B * alpha/2)
+   h1 <- round(B * (1-alpha/2))
   
-  h1 <- round(B * alpha/2)
-  h1 <- round(B * (1-alpha/2))
+   theta_lo <- bootstrap_est[h1]
+   theta_up <- bootstrap_est[h2]
   
-  theta_lo <- bootstrap_est[h1]
-  theta_up <- bootstrap_est[h2]
-  
-  CI <- c(theta_lo, theta_up)
+   CI <- c(theta_lo, theta_up)
    
-  return CI
+   return(CI)
 }
-
-
 
 ```
