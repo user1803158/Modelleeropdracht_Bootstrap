@@ -19,8 +19,8 @@ First we set some global parameters.
 
 ```{r}
 N = 1000
-true_variance_N = 300
-M = 300
+true_variance_N = 10000
+M = 1000
 alphas = c(0.001, 0.005, 0.01, 0.05, 0.1)
 ```
 
@@ -50,7 +50,7 @@ Set the parametric tests that we want to do
 
 ```{r}
 param_tests = list()
-for (n in c(10, 50, 100)){
+for (n in c(200)){
   param_tests = append(param_tests, list(
     list(
       test_name="normal distr. with mean 0, estimating sd", 
@@ -90,7 +90,7 @@ Set the non-parametric tests that we want to do.
 
 ```{r}
 nonparam_tests =list()
-for (n in c(100)){
+for (n in c(200)){
   nonparam_tests <- append(nonparam_tests, list(
     list(
       test_name="normal distr., estimating sd",
