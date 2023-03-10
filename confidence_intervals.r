@@ -16,7 +16,12 @@ BCa <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample
     }
   }
   
-  z0 <- qnorm(number/B)
+  if (number == 0)
+    z0 <- -10
+  else if (number == B)
+    z0 <- 10
+  else
+    z0 <- qnorm(number/B)
   
   for(i in 1:N)
   {

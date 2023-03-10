@@ -42,15 +42,25 @@ gamma_full_estimator <- function(x){
 gamma_shape_estimator <- function(x) mean(x)^2/var(x)
 
 cauchy <- function(x) function(N) rcauchy(N, location=x$loc, scale=x$scale)
-cauchy_full_estimator <- function(x) list(loc=mean(x))
-cauchy_loc_estimator <- function(x) mean(x)
+cauchy_full_estimator <- function(x) list(loc=median(x), scale=IQR(x)/2)
+cauchy_loc_estimator <- function(x) median(x)
+
+uniform <- function(x) function(N) runif(N, max=x)
+uniform_estimator <- function(x) max(x)*(1+1/length(x))
+
+exponential <- function(x) function(N) rexp(N, rate=x)
+exponential_estimator <- function(x) (length(x)-2)/sum(x)
+
+poisson <- function(x) function(N) rpois(N, lambda=x)
+poisson_estimator <- function(x) mean(x)
+
 ```
 
 Set the parametric tests that we want to do
 
 ```{r}
 param_tests = list()
-for (n in c(200)){
+for (n in c(50, 1000)){
   param_tests = append(param_tests, list(
     list(
       test_name="normal distr. with mean 0, estimating sd", 
@@ -63,26 +73,56 @@ for (n in c(200)){
       n=n
     ),
     list(
-      test_name="normal distr. with unknown mean, estimating sd", 
-      true_distr_gen=norm, 
-      true_params=list(mean=0,sd=1),
+      test_name="uniform, estimating maximum", 
+      true_distr_gen=uniform, 
+      true_params=1,
       true_theta=1, 
-      fake_distr_gen=norm,
-      full_estimator=norm_full_estimator, 
-      estimator=norm_sd_estimator, 
+      fake_distr_gen=uniform,
+      full_estimator=uniform_estimator, 
+      estimator=uniform_estimator, 
       n=n
     ),
     list(
-      test_name="gamma distr., estimating shape", 
-      true_distr_gen=gamma, 
-      true_params=list(shape=1,scale=1),
+      test_name="cauchy, estimating location", 
+      true_distr_gen=cauchy, 
+      true_params=list(locaion=1,scale=1),
       true_theta=1,
-      fake_distr_gen=gamma,
-      full_estimator=gamma_full_estimator, 
-      estimator=gamma_shape_estimator, 
+      fake_distr_gen=cauchy,
+      full_estimator=cauchy_full_estimator, 
+      estimator=cauchy_loc_estimator, 
       n=n
-    ))
-)
+    ),
+    list(
+      test_name="cauchy thinking it is normal, estimating location", 
+      true_distr_gen=cauchy, 
+      true_params=list(locaion=1,scale=1),
+      true_theta=1, 
+      fake_distr_gen=norm,
+      full_estimator=norm_full_estimator, 
+      estimator=norm_mean_estimator, 
+      n=n
+    ),
+    list(
+      test_name="exponential, estimating rate", 
+      true_distr_gen=exponential, 
+      true_params=1,
+      true_theta=1,
+      fake_distr_gen=exponential,
+      full_estimator=exponential_estimator, 
+      estimator=exponential_estimator, 
+      n=n
+    ),
+    list(
+      test_name="poisson, estimating lambda", 
+      true_distr_gen=poisson, 
+      true_params=1,
+      true_theta=1,
+      fake_distr_gen=poisson,
+      full_estimator=poisson_estimator, 
+      estimator=poisson_estimator, 
+      n=n
+    )
+  ))
 }
 ```
 
@@ -90,7 +130,7 @@ Set the non-parametric tests that we want to do.
 
 ```{r}
 nonparam_tests =list()
-for (n in c(200)){
+for (n in c(50, 1000)){
   nonparam_tests <- append(nonparam_tests, list(
     list(
       test_name="normal distr., estimating sd",
@@ -100,10 +140,31 @@ for (n in c(200)){
       n=n
     ),
     list(
-      test_name="gamma distr., estimating shape",
-      true_distr=norm(list(mean=0,sd=1)),
-      estimator=norm_sd_estimator,
+      test_name="uniform, estimating maximum", 
+      true_distr=uniform(1), 
       true_theta=1,
+      estimator=uniform_estimator, 
+      n=n
+    ),
+    list(
+      test_name="cauchy, estimating location", 
+      true_distr=cauchy(list(loc=0, scale=1)), 
+      true_theta=1,
+      estimator=cauchy_loc_estimator, 
+      n=n
+    ),
+    list(
+      test_name="exponential, estimating rate", 
+      true_distr=exponential(1), 
+      true_theta=1,
+      estimator=exponential_estimator, 
+      n=n
+    ),
+    list(
+      test_name="poisson, estimating lambda", 
+      true_distr=poisson(1),
+      true_theta=1,
+      estimator=poisson_estimator, 
       n=n
     )
   ))
@@ -130,7 +191,6 @@ for (x in nonparam_tests){
   print(paste("calculating ", full_name, "...", sep=""))
   monster_results = nonparam_monster(x$true_distr, x$estimator, x$true_theta, x$n, M, N, true_variance_N, alphas)
   results_list <- append(results_list, list(append(list(test=full_name), monster_results)))
-  
 }
 
 result_table = do.call(rbind.data.frame, results_list)
