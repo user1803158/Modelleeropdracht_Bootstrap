@@ -15,22 +15,24 @@ analyse_bootstrap_data <- function(true_theta, alphas, true_variance, M, estimat
       intervals(bootstrap_data$estimates, bootstrap_data$stderrors, bootstrap_data$theta_hat, bootstrap_data$start_sample, bootstrap_data$sample_stderror, estimator, alpha)
     }), recursive=F)
     truth_values = vapply(interval_pairs, function(x) (x[1] <= true_theta) & (true_theta <= x[2]), numeric(1))
-    c(var(bootstrap_data$estimates), truth_values)
+    widths = vapply(interval_pairs, function(x) x[2]-x[1], numeric(1))
+    c(var(bootstrap_data$estimates), rbind(truth_values, widths))
   })
   
   # turn bootstrap_results into a nice results list
-  results = list(mean((bootstrap_results[,1]-true_variance)^2))
+  results = list(mean((log(bootstrap_results[,1])-log(true_variance))^2))
   for (i in seq_along(alphas)){
     for (j in seq_along(confidence_interval_names)){
-      collumn_index = 2+(i-1)*length(confidence_interval_names)+(j-1)
-      results = c(results, 1-mean(bootstrap_results[, collumn_index]))
+      collumn_index = 2+2*((i-1)*length(confidence_interval_names)+(j-1))
+      results = c(results, 1-mean(bootstrap_results[, collumn_index]), mean(bootstrap_results[, collumn_index+1]))
     }
   }
-  result_names = c("mean square error of variance")
+  result_names = c("MSE of log variance")
   for (alpha in alphas){
     for (ci_name in confidence_interval_names){
-      name = paste(ci_name, ";alpha=", format(round(alpha, digits=3), nsmall=3), sep="")
-      result_names = c(result_names, name)
+      name1 = paste(ci_name, "_", format(round(alpha, digits=3), nsmall=3), "_confidence", sep="")
+      name2 = paste(ci_name, "_", format(round(alpha, digits=3), nsmall=3), "_avg_width", sep="")
+      result_names = c(result_names, name1, name2)
     }
   }
   names(results) = result_names

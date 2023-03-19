@@ -18,16 +18,16 @@ source("monster_functie.r")
 First we set some global parameters.
 
 ```{r}
-N = 1000
+N = 2000
 true_variance_N = 10000
-M = 1000
-alphas = c(0.001, 0.005, 0.01, 0.05, 0.1)
+M = 2000
+alphas = c(0.005, 0.01, 0.05, 0.1)
 ```
 
 Now we we define the distributions and estimators that we will use.
 
 ```{r}
-mean0norm <- function (sd) function(N) rnorm(N, mean=0, sd=sd)
+sd1norm <- function (x) function(N) rnorm(N, mean=x, sd=1)
 norm <- function (x) function(N) rnorm(N, mean=x$mean, sd=x$sd)
 norm_full_estimator <- function(x) list(mean=mean(x), sd=sd(x))
 norm_mean_estimator <- function(x) mean(x)
@@ -60,16 +60,26 @@ Set the parametric tests that we want to do
 
 ```{r}
 param_tests = list()
-for (n in c(50, 1000)){
+for (n in c(10, 50, 200, 1000)){
   param_tests = append(param_tests, list(
     list(
-      test_name="normal distr. with mean 0, estimating sd", 
-      true_distr_gen=mean0norm, 
-      true_params=1,
-      true_theta=1, 
-      fake_distr_gen=mean0norm,
-      full_estimator=norm_sd_estimator, 
-      estimator=norm_sd_estimator, 
+      test_name="normal distr. with sd 1, estimating mean", 
+      true_distr_gen=sd1norm, 
+      true_params=0,
+      true_theta=0, 
+      fake_distr_gen=sd1norm,
+      full_estimator=norm_mean_estimator, 
+      estimator=norm_mean_estimator, 
+      n=n
+    ),
+    list(
+      test_name="normal distr. with unknown sd, estimating mean", 
+      true_distr_gen=norm, 
+      true_params=list(mean=0, sd=1),
+      true_theta=0,
+      fake_distr_gen=norm,
+      full_estimator=norm_full_estimator, 
+      estimator=norm_mean_estimator, 
       n=n
     ),
     list(
@@ -85,21 +95,11 @@ for (n in c(50, 1000)){
     list(
       test_name="cauchy, estimating location", 
       true_distr_gen=cauchy, 
-      true_params=list(locaion=1,scale=1),
-      true_theta=1,
+      true_params=list(locaion=0,scale=1),
+      true_theta=0,
       fake_distr_gen=cauchy,
       full_estimator=cauchy_full_estimator, 
       estimator=cauchy_loc_estimator, 
-      n=n
-    ),
-    list(
-      test_name="cauchy thinking it is normal, estimating location", 
-      true_distr_gen=cauchy, 
-      true_params=list(locaion=1,scale=1),
-      true_theta=1, 
-      fake_distr_gen=norm,
-      full_estimator=norm_full_estimator, 
-      estimator=norm_mean_estimator, 
       n=n
     ),
     list(
@@ -124,19 +124,45 @@ for (n in c(50, 1000)){
     )
   ))
 }
+
+# robustness tests
+param_tests = append(param_tests, list(
+    list(
+      test_name="cauchy thinking it is normal, estimating location", 
+      true_distr_gen=cauchy, 
+      true_params=list(locaion=0,scale=1),
+      true_theta=0, 
+      fake_distr_gen=norm,
+      full_estimator=norm_full_estimator, 
+      estimator=norm_mean_estimator, 
+      n=200
+    ),
+    list(
+      test_name="exponential thinking it is normal, estimating rate", 
+      true_distr_gen=exponential, 
+      true_params=1,
+      true_theta=1, 
+      fake_distr_gen=norm,
+      full_estimator=norm_full_estimator, 
+      estimator=norm_mean_estimator, 
+      n=200
+    )
+))
+
+
 ```
 
 Set the non-parametric tests that we want to do.
 
 ```{r}
 nonparam_tests =list()
-for (n in c(50, 1000)){
+for (n in c(10, 50, 200, 1000)){
   nonparam_tests <- append(nonparam_tests, list(
     list(
-      test_name="normal distr., estimating sd",
+      test_name="normal distr., estimating mean",
       true_distr=norm(list(mean=0,sd=1)),
-      estimator=norm_sd_estimator,
-      true_theta=1,
+      estimator=norm_mean_estimator,
+      true_theta=0,
       n=n
     ),
     list(
@@ -149,7 +175,7 @@ for (n in c(50, 1000)){
     list(
       test_name="cauchy, estimating location", 
       true_distr=cauchy(list(loc=0, scale=1)), 
-      true_theta=1,
+      true_theta=0,
       estimator=cauchy_loc_estimator, 
       n=n
     ),
