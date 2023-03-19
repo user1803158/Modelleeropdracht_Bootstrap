@@ -56,10 +56,11 @@ poisson_estimator <- function(x) mean(x)
 
 ```
 
-Set the parametric tests that we want to do
+Set the parametric tests that we want to do.
 
 ```{r}
 param_tests = list()
+# tests on the effect of n and the distribution and parametric vs non-parametric
 for (n in c(10, 50, 200, 1000)){
   param_tests = append(param_tests, list(
     list(

@@ -7,7 +7,6 @@ BCa <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample
   B <- length(bootstrap_estimates)
   N <- length(start_sample)
   number <- 0
-  # x <- list(sample)
   theta <- rep(0, N)
   
   for(i in 1:B){
