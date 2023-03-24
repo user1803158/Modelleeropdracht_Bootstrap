@@ -3,14 +3,14 @@
 
 stderror <- function(x) sd(x)/sqrt(length(x))
 
-BCa <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample, sample_sderror, estimator, alpha) {
+BCa <- function(bootstrap_estimates, bootstrap_sderrors, T_hat, start_sample, sample_sderror, T_estimator, alpha) {
   B <- length(bootstrap_estimates)
   N <- length(start_sample)
   number <- 0
-  theta <- rep(0, N)
+  Ts <- rep(0, N)
   
   for(i in 1:B){
-    if (bootstrap_estimates[i] < theta_hat){
+    if (bootstrap_estimates[i] < T_hat){
       number <- number + 1
     }
   }
@@ -25,13 +25,13 @@ BCa <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample
   for(i in 1:N)
   {
     x_i <- start_sample[-i]
-    theta[i] <- estimator(x_i)
+    Ts[i] <- T_estimator(x_i)
   }
   
-  theta_mean <- mean(theta)
+  T_mean <- mean(Ts)
   
-  teller <- (theta_mean - theta)^3
-  noemer <- (theta_mean - theta)^2
+  teller <- (T_mean - Ts)^3
+  noemer <- (T_mean - Ts)^2
   
   a <- sum(teller)/(6*sum(noemer)^(3/2))
   
@@ -40,20 +40,20 @@ BCa <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample
   
   bootstrap_estimates <- sort(bootstrap_estimates)
   
-  theta_lo <- bootstrap_estimates[ceiling(B * alpha_1)]
-  theta_up <- bootstrap_estimates[floor(B * alpha_2)]
+  T_lo <- bootstrap_estimates[ceiling(B * alpha_1)]
+  T_up <- bootstrap_estimates[floor(B * alpha_2)]
   
-  CI <- c(theta_lo, theta_up)
+  CI <- c(T_lo, T_up)
   
   return(CI)
 }
 
-Bootstrap_t <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, sample_sderror, alpha) {
+Bootstrap_t <- function(bootstrap_estimates, bootstrap_sderrors, T_hat, sample_sderror, alpha) {
   B <- length(bootstrap_estimates)
   Z <- rep(0, B)
   
   for(i in 1:B)
-    Z[i] <- (bootstrap_estimates[i]-theta_hat)/bootstrap_sderrors[i]
+    Z[i] <- (bootstrap_estimates[i]-T_hat)/bootstrap_sderrors[i]
   
   Z <- sort(Z)
   
@@ -63,16 +63,16 @@ Bootstrap_t <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, samp
   t1 <- Z[h1]
   t2 <- Z[h2]
   
-  theta_lo <- theta_hat-t2*sample_sderror
-  theta_up <- theta_hat-t1*sample_sderror
+  T_lo <- T_hat-t2*sample_sderror
+  T_up <- T_hat-t1*sample_sderror
   
-  CI <- c(theta_lo, theta_up)
+  CI <- c(T_lo, T_up)
   
   return(CI)
 }   
 
 
-Basic <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, sample_sderror, alpha) {
+Basic <- function(bootstrap_estimates, bootstrap_sderrors, T_hat, sample_sderror, alpha) {
   B <- length(bootstrap_estimates)
   
   h1 <- ceiling(B * alpha/2)
@@ -80,20 +80,20 @@ Basic <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, sample_sde
   
   bootstrap_estimates = sort(bootstrap_estimates)
   
-  theta_lo <- bootstrap_estimates[h1]
-  theta_up <- bootstrap_estimates[h2]
+  T_lo <- bootstrap_estimates[h1]
+  T_up <- bootstrap_estimates[h2]
   
-  CI <- c(theta_lo, theta_up)
+  CI <- c(T_lo, T_up)
   
   return(CI)
 }
 
 confidence_interval_names = c("BCa", "Bootstrap_t", "Basic")
-intervals <- function(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample, sample_sderror, estimator, alpha){
+intervals <- function(bootstrap_estimates, bootstrap_sderrors, T_hat, start_sample, sample_sderror, T_estimator, alpha){
   list(
-    BCa(bootstrap_estimates, bootstrap_sderrors, theta_hat, start_sample, sample_sderror, estimator, alpha),
-    Bootstrap_t(bootstrap_estimates, bootstrap_sderrors, theta_hat, sample_sderror, alpha),
-    Basic(bootstrap_estimates, bootstrap_sderrors, theta_hat, sample_sderror, alpha)
+    BCa(bootstrap_estimates, bootstrap_sderrors, T_hat, start_sample, sample_sderror, T_estimator, alpha),
+    Bootstrap_t(bootstrap_estimates, bootstrap_sderrors, T_hat, sample_sderror, alpha),
+    Basic(bootstrap_estimates, bootstrap_sderrors, T_hat, sample_sderror, alpha)
   )
 }
 

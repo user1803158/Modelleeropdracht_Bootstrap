@@ -67,60 +67,60 @@ for (n in c(10, 50, 200, 1000)){
       test_name="normal distr. with sd 1, estimating mean", 
       true_distr_gen=sd1norm, 
       true_params=0,
-      true_theta=0, 
+      true_T=0, 
       fake_distr_gen=sd1norm,
       full_estimator=norm_mean_estimator, 
-      estimator=norm_mean_estimator, 
+      T_estimator=norm_mean_estimator, 
       n=n
     ),
     list(
       test_name="normal distr. with unknown sd, estimating mean", 
       true_distr_gen=norm, 
       true_params=list(mean=0, sd=1),
-      true_theta=0,
+      true_T=0,
       fake_distr_gen=norm,
       full_estimator=norm_full_estimator, 
-      estimator=norm_mean_estimator, 
+      T_estimator=norm_mean_estimator, 
       n=n
     ),
     list(
       test_name="uniform, estimating maximum", 
       true_distr_gen=uniform, 
       true_params=1,
-      true_theta=1, 
+      true_T=1, 
       fake_distr_gen=uniform,
       full_estimator=uniform_estimator, 
-      estimator=uniform_estimator, 
+      T_estimator=uniform_estimator, 
       n=n
     ),
     list(
       test_name="cauchy, estimating location", 
       true_distr_gen=cauchy, 
       true_params=list(locaion=0,scale=1),
-      true_theta=0,
+      true_T=0,
       fake_distr_gen=cauchy,
       full_estimator=cauchy_full_estimator, 
-      estimator=cauchy_loc_estimator, 
+      T_estimator=cauchy_loc_estimator, 
       n=n
     ),
     list(
       test_name="exponential, estimating rate", 
       true_distr_gen=exponential, 
       true_params=1,
-      true_theta=1,
+      true_T=1,
       fake_distr_gen=exponential,
       full_estimator=exponential_estimator, 
-      estimator=exponential_estimator, 
+      T_estimator=exponential_estimator, 
       n=n
     ),
     list(
       test_name="poisson, estimating lambda", 
       true_distr_gen=poisson, 
       true_params=1,
-      true_theta=1,
+      true_T=1,
       fake_distr_gen=poisson,
       full_estimator=poisson_estimator, 
-      estimator=poisson_estimator, 
+      T_estimator=poisson_estimator, 
       n=n
     )
   ))
@@ -132,20 +132,20 @@ param_tests = append(param_tests, list(
       test_name="cauchy thinking it is normal, estimating location", 
       true_distr_gen=cauchy, 
       true_params=list(locaion=0,scale=1),
-      true_theta=0, 
+      true_T=0, 
       fake_distr_gen=norm,
       full_estimator=norm_full_estimator, 
-      estimator=norm_mean_estimator, 
+      T_estimator=norm_mean_estimator, 
       n=200
     ),
     list(
       test_name="exponential thinking it is normal, estimating rate", 
       true_distr_gen=exponential, 
       true_params=1,
-      true_theta=1, 
+      true_T=1, 
       fake_distr_gen=norm,
       full_estimator=norm_full_estimator, 
-      estimator=norm_mean_estimator, 
+      T_estimator=norm_mean_estimator, 
       n=200
     )
 ))
@@ -162,36 +162,36 @@ for (n in c(10, 50, 200, 1000)){
     list(
       test_name="normal distr., estimating mean",
       true_distr=norm(list(mean=0,sd=1)),
-      estimator=norm_mean_estimator,
-      true_theta=0,
+      T_estimator=norm_mean_estimator,
+      true_T=0,
       n=n
     ),
     list(
       test_name="uniform, estimating maximum", 
       true_distr=uniform(1), 
-      true_theta=1,
-      estimator=uniform_estimator, 
+      true_T=1,
+      T_estimator=uniform_estimator, 
       n=n
     ),
     list(
       test_name="cauchy, estimating location", 
       true_distr=cauchy(list(loc=0, scale=1)), 
-      true_theta=0,
-      estimator=cauchy_loc_estimator, 
+      true_T=0,
+      T_estimator=cauchy_loc_estimator, 
       n=n
     ),
     list(
       test_name="exponential, estimating rate", 
       true_distr=exponential(1), 
-      true_theta=1,
-      estimator=exponential_estimator, 
+      true_T=1,
+      T_estimator=exponential_estimator, 
       n=n
     ),
     list(
       test_name="poisson, estimating lambda", 
       true_distr=poisson(1),
-      true_theta=1,
-      estimator=poisson_estimator, 
+      true_T=1,
+      T_estimator=poisson_estimator, 
       n=n
     )
   ))
@@ -207,8 +207,8 @@ results_list = list()
 for (x in param_tests){
   full_name = paste(x$test_name, ", parametric", ", n=", format(round(x$n, digits=0), nsmall=0), sep="")
   print(paste("calculating ", full_name, "...", sep=""))
-  monster_results = param_monster(x$true_distr_gen, x$true_params, x$true_theta, x$full_estimator, x$n, M, N, true_variance_N, alphas,
-                                  x$estimator, x$fake_distr_gen)
+  monster_results = param_monster(x$true_distr_gen, x$true_params, x$true_T, x$full_estimator, x$n, M, N, true_variance_N, alphas,
+                                  x$T_estimator, x$fake_distr_gen)
   results_list <- append(results_list, list(append(list(test=full_name), monster_results)))
 }
 
@@ -216,7 +216,7 @@ for (x in param_tests){
 for (x in nonparam_tests){
   full_name = paste(x$test_name, ", non-parametric", ", n=", format(round(x$n, digits=0), nsmall=0), sep="")
   print(paste("calculating ", full_name, "...", sep=""))
-  monster_results = nonparam_monster(x$true_distr, x$estimator, x$true_theta, x$n, M, N, true_variance_N, alphas)
+  monster_results = nonparam_monster(x$true_distr, x$T_estimator, x$true_T, x$n, M, N, true_variance_N, alphas)
   results_list <- append(results_list, list(append(list(test=full_name), monster_results)))
 }
 

@@ -7,16 +7,16 @@ param_bootstrap_data <- function(distr, n, N, estimator){
 }
 
 
-analyse_bootstrap_data <- function(true_theta, alphas, true_variance, M, estimator, bootstrap_data_generator){
+analyse_bootstrap_data <- function(true_T, alphas, true_variance, M, T_estimator, bootstrap_data_generator){
   # apply the bootstrap algorithm M times and put some results in the 'bootstrap_results' dataframe
   bootstrap_results = rdply(M, .id=NULL, .expr={
     bootstrap_data = bootstrap_data_generator()
     interval_pairs = unlist(lapply(alphas, function(alpha){
-      intervals(bootstrap_data$estimates, bootstrap_data$stderrors, bootstrap_data$theta_hat, bootstrap_data$start_sample, bootstrap_data$sample_stderror, estimator, alpha)
+      intervals(bootstrap_data$T_estimates, bootstrap_data$stderrors, bootstrap_data$T_hat, bootstrap_data$start_sample, bootstrap_data$sample_stderror, T_estimator, alpha)
     }), recursive=F)
-    truth_values = vapply(interval_pairs, function(x) (x[1] <= true_theta) & (true_theta <= x[2]), numeric(1))
+    truth_values = vapply(interval_pairs, function(x) (x[1] <= true_T) & (true_T <= x[2]), numeric(1))
     widths = vapply(interval_pairs, function(x) x[2]-x[1], numeric(1))
-    c(var(bootstrap_data$estimates), rbind(truth_values, widths))
+    c(var(bootstrap_data$T_estimates), rbind(truth_values, widths))
   })
   
   # turn bootstrap_results into a nice results list
@@ -40,55 +40,55 @@ analyse_bootstrap_data <- function(true_theta, alphas, true_variance, M, estimat
 }
 
 
-param_monster <- function (true_distr_gen, true_params, true_theta, params_estimator, n, M, N, true_variance_N, alphas=c(), estimator, bootstrap_distr_gen){
-  # calculate the true variance of the estimator
+param_monster <- function (true_distr_gen, true_params, true_T, params_estimator, n, M, N, true_variance_N, alphas=c(), T_estimator, expected_distr_gen){
+  # calculate the true variance of the estimator for T
   true_distr = true_distr_gen(true_params)
-  true_variance = var(param_bootstrap_data(true_distr, n, true_variance_N, estimator))
+  true_variance = var(param_bootstrap_data(true_distr, n, true_variance_N, T_estimator))
   # apply the analyse_bootstrap_data function to a function that generates some
-  # results about a parametric bootstrap sample
-  analyse_bootstrap_data(true_theta, alphas, true_variance, M, estimator, function(){
+  # infomration about an application of the parametric bootstrap_algorithm
+  analyse_bootstrap_data(true_T, alphas, true_variance, M, T_estimator, function(){
     # generate the initial sample
     start_sample = true_distr(n)
     # obtain the distribution with the estimated parameters
-    distr = bootstrap_distr_gen(params_estimator(start_sample))
-    # apply the parametric bootstrap algorithm and store the estimation of theta
+    distr = expected_distr_gen(params_estimator(start_sample))
+    # apply the parametric bootstrap algorithm and store the estimation of T
     # for each bootstrap sample and the standard error of each bootstrap_sample
     bootstrap_results = raply(N, {
       bootstrap_sample = distr(n)
-      c(estimator(bootstrap_sample), stderror(bootstrap_sample))
+      c(T_estimator(bootstrap_sample), stderror(bootstrap_sample))
     })
     # return some information about this application of the bootstrap algorithm
     list(
-      theta_hat=estimator(start_sample),
+      T_hat=T_estimator(start_sample),
       sample_stderror=stderror(start_sample),
       start_sample=start_sample,
-      estimates=bootstrap_results[,1], 
+      T_estimates=bootstrap_results[,1], 
       stderrors=bootstrap_results[,2]
     )
   })
 }
 
-nonparam_monster <- function(true_distr, estimator, true_theta, n, M, N, true_variance_N, alphas=c()){
-  # calculate the true variance of the estimator
-  true_variance = var(param_bootstrap_data(true_distr, n, true_variance_N , estimator))
+nonparam_monster <- function(true_distr, T_estimator, true_T, n, M, N, true_variance_N, alphas=c()){
+  # calculate the true variance of the estimator for T
+  true_variance = var(param_bootstrap_data(true_distr, n, true_variance_N, T_estimator))
   # apply the analyse_bootstrap_data function to a function that generates some
-  # results about a parametric bootstrap sample
-  analyse_bootstrap_data(true_theta, alphas, true_variance, M, estimator, function(){
+  # information about an application of the bootstrap algorithm
+  analyse_bootstrap_data(true_T, alphas, true_variance, M, T_estimator, function(){
     # generate the initial sample
     start_sample = true_distr(n)
     # apply the non-parametric bootstrap algorithm and store the estimation of
-    # theta for each bootstrap sample and the standard error of each 
+    # T for each bootstrap sample and the standard error of each 
     # bootstrap_sample
     bootstrap_results = raply(N, {
       bootstrap_sample = sample(start_sample, n, replace=T)
-      c(estimator(bootstrap_sample), stderror(bootstrap_sample))
+      c(T_estimator(bootstrap_sample), stderror(bootstrap_sample))
     })
     # return some information about this application of the bootstrap algorithm
     list(
-      theta_hat=estimator(start_sample),
+      T_hat=T_estimator(start_sample),
       sample_stderror=stderror(start_sample),
       start_sample=start_sample,
-      estimates=bootstrap_results[,1], 
+      T_estimates=bootstrap_results[,1], 
       stderrors=bootstrap_results[,2]
     )
   })
