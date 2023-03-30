@@ -8,27 +8,11 @@ output: pdf_document
 rm(list = ls())
 ```
 
-## Part 2: data analysis
-
-source("confidence_intervals.r")
-
-stderror <- function(x) sd(x)/sqrt(length(x))
-
-bootstrap_sderror <- rep(0, 10000)
-
-2018:
-P: mannen + vrouwen, >= 70 jaar
-I: aspirine
-C: placebo 
-O: hartaandoening ontwikkeld
-
-1988:
-P: mannelijke artsen, 40-84 jaar
-I: aspirine
-C: placebo
-O: hartaandoening ontwikkeld
+## Part 2 data analysis
 
 ```{r}
+library("plyr")
+
 
 risk_ratio <- function(asp, plac) {
   mean(asp)/mean(plac)
@@ -164,10 +148,12 @@ asp_hersen_1988 <- c(rep(0, N_asp_1988-n_asp_hersen_1988), rep(1, n_asp_hersen_1
 plac_hersen_1988 <- c(rep(0, N_plac_1988-n_plac_hersen_1988), rep(1, n_plac_hersen_1988))
 
 # calculate estimators of bootstraps
-bootstrap_est_2018 <- replicate(N, expr = {
+bootstrap_2018_results <- rdply(N, .id=NULL, .expr = {
   sample_asp <- sample(asp_2018, replace = T)
   sample_plac <- sample(plac_2018, replace = T)
-  mean(sample_asp)/mean(sample_plac)
+  ones_asp <- sum(sample_asp)
+  ones_plac <- sum(sample_plac)
+  c(mean(sample_asp)/mean(sample_plac), sqrt(1/ones_asp + 1/ones_plac -1/N_asp_2018 - 1/N_plac_2018))
 })
 
 bootstrap_est_hart_1998 <- replicate(N, expr = {
@@ -183,13 +169,13 @@ bootstrap_est_hersen_1998 <- replicate(N, expr = {
 })
 
 #calculate standard error of bootstraps
-bootstrap_sderror_2018 <- replicate(N, expr = {
-  sample_asp <- sample(asp_2018, replace = T)
-  sample_plac <- sample(plac_2018, replace = T)
-  ones_asp <- sum(sample_asp)
-  ones_plac <- sum(sample_plac)
-  sqrt(1/ones_asp + 1/ones_plac -1/N_asp_2018 - 1/N_plac_2018)
-})
+# bootstrap_sderror_2018 <- replicate(N, expr = {
+#   sample_asp <- sample(asp_2018, replace = T)
+#   sample_plac <- sample(plac_2018, replace = T)
+#   ones_asp <- sum(sample_asp)
+#   ones_plac <- sum(sample_plac)
+#   sqrt(1/ones_asp + 1/ones_plac -1/N_asp_2018 - 1/N_plac_2018)
+# })
 
 bootstrap_sderror_hart_1988 <- replicate(N, expr = {
   sample_asp <- sample(asp_hart_1988, replace = T)
@@ -212,9 +198,9 @@ sample_stderror_2018 <- sqrt(1/n_asp_2018 + 1/n_plac_2018 -1/N_asp_2018 - 1/N_pl
 sample_stderror_hart_1988 <- sqrt(1/n_asp_hart_1988 + 1/n_plac_hart_1988 -1/N_asp_1988 - 1/N_plac_1988)
 sample_stderror_hersen_1988 <- sqrt(1/n_asp_hersen_1988 + 1/n_plac_hersen_1988 -1/N_asp_1988 - 1/N_plac_1988)
 
-BCa_2018 <- BCa(bootstrap_est_2018, bootstrap_sderror_2018, RR_2018, asp_2018, plac_2018, sample_stderror_2018, 0.05)
-Bootstrap_t_2018 <- Bootstrap_t(bootstrap_est_2018, bootstrap_sderror_2018, RR_2018, sample_stderror_2018, 0.05)
-Basic_2018 <- Basic(bootstrap_est_2018, bootstrap_sderror_2018, RR_2018, sample_stderror_2018, 0.05)
+BCa_2018 <- BCa(bootstrap_2018_results[,1], bootstrap_2018_results[,2], RR_2018, asp_2018, plac_2018, sample_stderror_2018, 0.05)
+Bootstrap_t_2018 <- Bootstrap_t(bootstrap_2018_results[,1], bootstrap_2018_results[,2], RR_2018, sample_stderror_2018, 0.05)
+Basic_2018 <- Basic(bootstrap_2018_results[,1], bootstrap_2018_results[,2], RR_2018, sample_stderror_2018, 0.05)
 
 BCa_hart_1988 <- BCa(bootstrap_est_hart_1998, bootstrap_sderror_hart_1988, RR_hart_1988, asp_hart_1988, plac_hart_1988, sample_stderror_hart_1988, 0.05)
 Bootstrap_t_hart_1988 <- Bootstrap_t(bootstrap_est_hart_1998, bootstrap_sderror_hart_1988, RR_hart_1988, sample_stderror_hart_1988, 0.05)
