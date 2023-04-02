@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Import files
 
-```{r}
+```{r setup}
 source("monster_functie.r")
 ```
 
@@ -129,23 +129,33 @@ for (n in c(10, 50, 200, 1000)){
 # robustness tests
 param_tests = append(param_tests, list(
     list(
-      test_name="cauchy thinking it is normal, estimating location", 
-      true_distr_gen=cauchy, 
-      true_params=list(locaion=0,scale=1),
-      true_theta=0, 
-      fake_distr_gen=norm,
-      full_estimator=norm_full_estimator, 
-      theta_estimator=norm_mean_estimator, 
+      test_name="exponential thinking it is exponential, estimating mean", 
+      true_distr_gen=exponential, 
+      true_params=1,
+      true_theta=1, 
+      fake_distr_gen=exponential,
+      full_estimator=exponential_estimator, 
+      theta_estimator=mean,
       n=200
     ),
     list(
-      test_name="exponential thinking it is normal, estimating rate", 
+      test_name="exponential thinking it is normal, estimating mean", 
       true_distr_gen=exponential, 
       true_params=1,
       true_theta=1, 
       fake_distr_gen=norm,
       full_estimator=norm_full_estimator, 
-      theta_estimator=norm_mean_estimator, 
+      theta_estimator=mean,
+      n=200
+    ),
+    list(
+      test_name="exponential thinking it is uniform, estimating mean", 
+      true_distr_gen=exponential, 
+      true_params=1,
+      true_theta=1, 
+      fake_distr_gen=uniform,
+      full_estimator=uniform_estimator, 
+      theta_estimator=mean,
       n=200
     )
 ))
@@ -196,6 +206,17 @@ for (n in c(10, 50, 200, 1000)){
     )
   ))
 }
+
+# robustness tests
+nonparam_tests = append(nonparam_tests, list(
+    list(
+      test_name="exponential, estimating mean", 
+      true_distr=exponential(1), 
+      true_theta=1,
+      theta_estimator=mean, 
+      n=200
+    )
+))
 ```
 
 Run the tests.
