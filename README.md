@@ -11,4 +11,4 @@ This project gives the code for a modelling task at the university of leiden.
 - `test4_results.xlsx`: the second of the two output files used in the article. This file specifically contains the results from the robustness tests.
 - `confidence_interval.r`: the code for generating the confidence intervals in `monster_functie.r`.
 - `medical_data_analysis.Rmd`: the code used for the application of bootstrapping to medical data.
-- `distribution_graphs.r`: some code for generating the graphs of standard distributions used in the article.
+- `distribution_graphs.Rmd`: some code for generating the graphs of standard distributions used in the article.
